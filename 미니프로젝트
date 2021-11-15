@@ -1,0 +1,525 @@
+package JDBC02; 
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Scanner;
+
+import JDBC.JDBC_01;
+
+class JDBC {
+	Scanner scan = new Scanner(System.in);
+	Connection con = null;
+
+	public JDBC() {
+		con = JDBC_01.getCon();
+	}
+
+	public void insert() throws SQLException {
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		ResultSet rs = null;
+		ResultSet rs1 = null;
+
+		try {
+			while (true) {
+				System.out.println("회원 아이디를 입력하세요");
+				String bid = scan.next();
+
+				String id = "select bid from membership where bid=" + "'" + bid + "'";
+				pstmt1 = con.prepareStatement(id);
+				rs1 = pstmt1.executeQuery();
+				if (rs1.next() == true) {
+					System.out.println("이미 존재하는 아이디입니다.");
+				} else {
+
+					System.out.println("회원 비밀번호를 입력하세요");
+					String bpw = scan.next();
+					System.out.println("회원 전화번호를 입력하세요");
+					String phone = scan.next();
+					String sql = "insert into membership values(?,?,?,sysdate)";
+					pstmt = con.prepareStatement(sql);
+					pstmt.setString(1, bpw);
+					pstmt.setString(2, bid);
+					pstmt.setString(3, phone);
+					pstmt.executeUpdate();
+					System.out.println(bid + "님의 회원 가입이 완료되었습니다.");
+					con.commit();
+					break;
+				}
+			}
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다.");
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, pstmt1, rs, rs1);
+		}
+	}
+
+	public void insert2() throws SQLException {
+		PreparedStatement pstmt = null;
+		System.out.println("등록할 책의 이름을 입력하세요");
+		String bname = scan.next();
+		System.out.println(bname + "의 수량을 입력하세요");
+		int bcount = scan.nextInt();
+		System.out.println(bname + "의 가격을 입력하세요");
+		int bprice = scan.nextInt();
+		String sql1 = "insert into book values(book_seq.nextval,?,?,?)";
+		try {
+			pstmt = con.prepareStatement(sql1);
+			pstmt.setString(1, bname);
+			pstmt.setInt(2, bcount);
+			pstmt.setInt(3, bprice);
+			int n = pstmt.executeUpdate();
+			System.out.println(n + "개의 서적이 등록되었습니다.");
+			con.commit();
+
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다.");
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, null);
+		}
+	}
+
+	public void setAll() throws SQLException {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sql2 = "select * from book";
+		pstmt = con.prepareStatement(sql2);
+		rs = pstmt.executeQuery();
+		try {
+			System.out.println("<<책 정보>>");
+			while (rs.next()) {
+				int bknum = rs.getInt("bknum");
+				String bname = rs.getString("bname");
+				int bcount = rs.getInt("bcount");
+				int bprice = rs.getInt("bprice");
+				System.out.println("책 번호:" + bknum);
+				System.out.println("책 이름:" + bname);
+				System.out.println("책 가격:" + bprice);
+				System.out.println("책 수량:" + bcount);
+				System.out.println();
+			}
+			System.out.println("모든 정보를 불러왔습니다.");
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다." + s.getMessage());
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, rs);
+		}
+	}
+
+	public void buy() throws SQLException {
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		PreparedStatement pstmt2 = null;
+		PreparedStatement pstmt3 = null;
+		PreparedStatement pstmt4 = null;
+		PreparedStatement pstmt5 = null;
+		PreparedStatement pstmt6 = null;
+		PreparedStatement pstmt7 = null;
+		PreparedStatement pstmt11 = null;
+		ResultSet rs = null;
+		ResultSet rs1 = null;
+		ResultSet rs2 = null;
+		ResultSet rs3 = null;
+		ResultSet rs4 = null;
+		ResultSet rs5 = null;
+		try {
+			while (true) {
+				System.out.println("아이디를 입력하세요");
+				String bid = scan.next();
+				System.out.println("비밀번호를 입력하세요");
+				String bpw = scan.next();
+				String idpwd = "select bid,bpw from membership where bid=" + "'" + bid + "'" + " and bpw=" + "'" + bpw
+						+ "'";
+				pstmt5 = con.prepareStatement(idpwd);
+				rs3 = pstmt5.executeQuery();
+
+				if (rs3.next() == true) {
+					System.out.println("로그인 되었습니다.");
+				} else {
+					System.out.println("아이디 또는 비밀번호가 틀렸습니다.");
+					rs3.close();
+					pstmt5.close();
+					continue;
+				}
+
+				System.out.println(bid + "님 환영합니다.");
+				System.out.println();
+
+				String sql4 = "select bknum,bname,bcount,bprice from book where bKNUM=?";
+				pstmt1 = con.prepareStatement(sql4);
+				System.out.println("결제할 책 번호를 입력하세요");
+				int bknum = scan.nextInt();
+				pstmt1.setInt(1, bknum);
+				pstmt1.execute();
+
+				rs = pstmt1.executeQuery();
+				System.out.println("<<책 정보>>");
+				while (rs.next()) {
+					String bname = rs.getString("bname");
+					int bcount = rs.getInt("bcount");
+					int bprice = rs.getInt("bprice");
+					System.out.println("책 번호:" + bknum);
+					System.out.println("책 이름:" + bname);
+					System.out.println("책 가격:" + bprice);
+					System.out.println("책 수량:" + bcount);
+					System.out.println();
+				}
+				String sql9 = "select bcount from book where bknum=? and bcount<=0";
+				pstmt11 = con.prepareStatement(sql9);
+				pstmt11.setInt(1, bknum);
+				rs5=pstmt11.executeQuery();
+				if(rs5.next()==true) {
+					System.out.println("구매 가능한 수량이 없습니다...");
+					System.out.println();
+					break;
+				}else {
+				System.out.println("구매 수량을 입력해 주세요");
+				
+				String sql5 = "insert into buy(bnum,bid,bknum,ccount) values(buy_seq.nextval,?,?,?)";
+				pstmt2 = con.prepareStatement(sql5);
+
+				int ccount = scan.nextInt();
+				System.out.println("결제중입니다...");
+				pstmt2.setString(1, bid);
+				pstmt2.setInt(2, bknum);
+				pstmt2.setInt(3, ccount);
+				pstmt2.executeUpdate();
+				System.out.println("결제 완료되었습니다.");
+				System.out.println();
+
+				String sql8 = "Update book set bcount=bcount-? where bknum=?";
+				pstmt3 = con.prepareStatement(sql8);
+				pstmt3.setInt(1, ccount);
+				pstmt3.setInt(2, bknum);
+				pstmt3.executeUpdate();
+				System.out.println();
+
+				con.commit();
+
+				String sql10 = "select b.bknum,y.bnum,b.bprice,y.bid,b.bname,y.ccount" + " from book b,buy y "
+						+ "where b.bknum=y.bknum and y.bid=? and y.bnum=(select max(bnum) from buy)" + "";
+				pstmt7 = con.prepareStatement(sql10);
+				pstmt7.setString(1, bid);
+				rs4 = pstmt7.executeQuery();
+
+				while (rs4.next()) {
+					System.out.println("<<영수증>>");
+					int bnum = rs4.getInt("bnum");
+					String bname = rs4.getString("bname");
+					int bprice = rs4.getInt("bprice");
+					System.out.println("구매자 아이디:" + bid);
+					System.out.println("구매 번호:" + bnum);
+					System.out.println("책 번호:" + bknum);
+					System.out.println("책 이름:" + bname);
+					System.out.println("구매 수량:" + ccount);
+					System.out.println("결제 가격:" + (ccount * bprice));
+					System.out.println();
+
+				}
+				}
+				break;
+			    
+			}
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다." + s.getMessage());
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, pstmt1, pstmt2, pstmt3, pstmt4, pstmt5, 
+					pstmt6, pstmt7,pstmt11, rs, rs1, rs2, rs3, rs4,rs5);
+		}
+
+	}
+
+	public void selectid() throws SQLException {
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		PreparedStatement pstmt2 = null;
+		ResultSet rs = null;
+		ResultSet rs1 = null;
+
+		try {
+			while (true) {
+				System.out.println("아이디를 입력하세요");
+				String bid = scan.next();
+				System.out.println("비밀번호를 입력하세요");
+				String bpw = scan.next();
+				String idpwd = "select bid,bpw from membership where bid=" + "'" + bid + "'" + " and bpw=" + "'" + bpw
+						+ "'";
+				pstmt1 = con.prepareStatement(idpwd);
+				rs = pstmt1.executeQuery();
+
+				if (rs.next() == true) {
+					System.out.println("로그인 되었습니다.");
+				} else {
+					System.out.println("아이디 또는 비밀번호가 틀렸습니다.");
+					rs.close();
+					pstmt1.close();
+					continue;
+				}
+
+				String sql = "select b.bknum,y.bnum,b.bprice,y.bid,b.bname,y.ccount" + " from book b,buy y "
+						+ "where b.bknum=y.bknum and y.bid=?";
+				pstmt2 = con.prepareStatement(sql);
+				pstmt2.setString(1, bid);
+				rs1 = pstmt2.executeQuery();
+
+				while (rs1.next()) {
+					System.out.println("<<영수증>>");
+					int bnum = rs1.getInt("bnum");
+					String bname = rs1.getString("bname");
+					int ccount = rs1.getInt("ccount");
+					int bprice = rs1.getInt("bprice");
+					int bknum = rs1.getInt("bknum");
+					System.out.println("구매자 아이디:" + bid);
+					System.out.println("구매 번호:" + bnum);
+					System.out.println("책 번호:" + bknum);
+					System.out.println("책 이름:" + bname);
+					System.out.println("구매 수량:" + ccount);
+					System.out.println("결제 가격:" + (ccount * bprice));
+					System.out.println();
+
+					con.commit();
+				}
+				break;
+			}
+
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다." + s.getMessage());
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, pstmt1, pstmt2, rs, rs1);
+		}
+
+	}
+
+	public void delete() throws SQLException {
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		PreparedStatement pstmt2 = null;
+		PreparedStatement pstmt7 = null;
+		ResultSet rs = null;
+		ResultSet rs4 = null;
+		try {
+			while (true) {
+				System.out.println("아이디를 입력하세요");
+				String bid = scan.next();
+				System.out.println("비밀번호를 입력하세요");
+				String bpw = scan.next();
+				String idpwd = "select bid,bpw from membership where bid=" + "'" + bid + "'" + " and bpw=" + "'" + bpw
+						+ "'";
+				pstmt = con.prepareStatement(idpwd);
+				rs = pstmt.executeQuery();
+
+				if (rs.next() == true) {
+					System.out.println("로그인 되었습니다.");
+				} else {
+					System.out.println("아이디 또는 비밀번호가 틀렸습니다.");
+					rs.close();
+					pstmt.close();
+					continue;
+				}
+				System.out.println("환불할 책 번호를 입력해주세요");
+				int bknum = scan.nextInt();
+				System.out.println("환불 수량을 입력해주세요");
+				int ccount = scan.nextInt();
+				String sql1 = "insert into refund(renum,bknum,ccount,BID) values(refund_seq.nextval,?,?,?)";
+				pstmt1 = con.prepareStatement(sql1);
+				pstmt1.setInt(1, bknum);
+				pstmt1.setInt(2, ccount);
+				pstmt1.setString(3, bid);
+				pstmt1.executeUpdate();
+				
+				String sql2 = "Update book set bcount=bcount-? where bknum=?";
+				pstmt2 = con.prepareStatement(sql2);
+				pstmt2.setInt(1, ccount);
+				pstmt2.setInt(2, bknum);
+				pstmt2.executeUpdate();
+				System.out.println("환불 완료되었습니다.");
+
+				String sql10 = "select b.bknum,r.bnum,b.bprice,r.bid,b.bname,r.ccount,r.renum"
+						+ " from book b,refund r "
+						+ "where b.bknum=r.bknum and r.bid=? and r.renum=(select max(renum) from refund)";
+				pstmt7 = con.prepareStatement(sql10);
+				pstmt7.setString(1, bid);
+				rs4 = pstmt7.executeQuery();
+
+				while (rs4.next()) {
+					System.out.println("<<영수증>>");
+					int bnum = rs4.getInt("bnum");
+					String bname = rs4.getString("bname");
+					int bprice = rs4.getInt("bprice");
+					int renum = rs4.getInt("renum");
+					System.out.println("구매자 아이디:" + bid);
+					System.out.println("환불 번호:" + renum);
+					System.out.println("책 번호:" + bknum);
+					System.out.println("책 이름:" + bname);
+					System.out.println("환불 수량:" + ccount * -1);
+					System.out.println("환불 가격:" + (ccount * bprice) * -1);
+					System.out.println();
+					con.commit();
+				}
+
+				break;
+			}
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다.");
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt, pstmt1, pstmt2, pstmt7, rs, rs4);
+		}
+
+	}
+
+	public void UpdateMember() throws SQLException {
+		PreparedStatement pstmt2 = null;
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		ResultSet rs1 = null;
+		ResultSet rs = null;
+
+		try {
+			while (true) {
+				System.out.println("아이디를 입력하세요");
+				String bid = scan.next();
+				System.out.println("비밀번호를 입력하세요");
+				String bpw = scan.next();
+				String idpwd = "select bid,bpw from membership where bid=" + "'" + bid + "'" + " and bpw=" + "'" + bpw
+						+ "'";
+				pstmt = con.prepareStatement(idpwd);
+				rs = pstmt.executeQuery();
+
+				if (rs.next() == true) {
+					System.out.println("로그인 되었습니다.");
+				} else {
+					System.out.println("아이디 또는 비밀번호가 틀렸습니다.");
+					rs.close();
+					pstmt.close();
+					continue;
+				}
+
+				System.out.println("수정할 회원 아이디를 입력하세요");
+				String nbid = scan.next();
+				String id = "select bid from membership where bid=" + "'" + nbid + "'";
+				pstmt1 = con.prepareStatement(id);
+				rs1 = pstmt1.executeQuery();
+				if (rs1.next() == true) {
+					System.out.println("이미 존재하는 아이디입니다.");
+
+				} else {
+
+					System.out.println(nbid + "의 수정할 비밀번호를 입력하세요");
+					String nbpw = scan.next();
+					System.out.println(nbid + "의 수정할 전화번호를 입력하세요");
+					String nbphone = scan.next();
+
+					String sql7 = "Update membership set bpw=?, bphone=?, bid=?, bdate=sysdate where bid=?";
+
+					pstmt2 = con.prepareStatement(sql7);
+
+					pstmt2.setString(1, nbpw);
+					pstmt2.setString(2, nbphone);
+					pstmt2.setString(3, nbid);
+					pstmt2.setString(4, bid);
+					pstmt2.executeUpdate();
+					System.out.println("수정 완료 되었습니다.");
+
+					con.commit();
+				}
+				break;
+			}
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다." + s.getMessage());
+			con.rollback();
+
+		} finally {
+			JDBC_01.close(con, pstmt, pstmt1, pstmt2, rs, rs1);
+		}
+	}
+
+	public void UpdateBook() throws SQLException {
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmt1 = null;
+		ResultSet rs=null;
+		try {
+			while(true) {
+			System.out.println("수정할 책의 번호를 입력하세요");
+			int bknum = scan.nextInt();
+			String sql9="select bknum from book where bknum=?";
+			pstmt1 = con.prepareStatement(sql9);
+			pstmt1.setInt(1, bknum);
+			rs=pstmt1.executeQuery();
+			if(rs.next()==false) {
+				System.out.println("해당되는 책이 없습니다.");
+				break;
+			}else {
+			System.out.println("수정할 책의 이름을 입력하세요");
+			String bname = scan.next();
+			System.out.println("수정할 책의 수량을 입력하세요");
+			int bcount = scan.nextInt();
+			System.out.println("수정할 책의 가격을 입력하세요");
+			int bprice = scan.nextInt();
+			
+	
+			String sql8 = "Update Book set bname=?,bcount=?,bprice=? where bknum=?";
+			pstmt = con.prepareStatement(sql8);
+			pstmt.setString(1, bname);
+			pstmt.setInt(2, bcount);
+			pstmt.setInt(3, bprice);
+			pstmt.setInt(4, bknum);
+			pstmt.executeUpdate();
+			System.out.println("상품이 수정되었습니다.");
+			con.commit();
+			}
+			break;
+		}
+		} catch (SQLException s) {
+			System.out.println("오류로 인해 작업이 실행되지 못했습니다." + s.getMessage());
+			con.rollback();
+		} finally {
+			JDBC_01.close(con, pstmt,pstmt1,rs);
+		}
+	}
+}
+
+public class JDBC02 {
+	public static void main(String[] args) throws SQLException {
+		while (true) {
+			JDBC jdbc = new JDBC();
+			Scanner scan = new Scanner(System.in);
+
+			System.out.println();
+			System.out.println("원하는 메뉴를 선택하세요");
+			System.out.println("1.회원 가입하기 2.상품 등록하기 3.상품 둘러보기 4.상품 결제하기" + " \r\n "
+					+ "5.구매내역 조회하기 6.상품 취소하기 7.회원 수정하기 8.상품 수정하기 9.종료하기");
+
+			int num = scan.nextInt();
+			if (num == 1) {
+				jdbc.insert();
+			} else if (num == 2) {
+				jdbc.insert2();
+			} else if (num == 3) {
+				jdbc.setAll();
+			} else if (num == 4) {
+				jdbc.buy();
+			} else if (num == 5) {
+				jdbc.selectid();
+			} else if (num == 6) {
+				jdbc.delete();
+			} else if (num == 7) {
+				jdbc.UpdateMember();
+			} else if (num == 8) {
+				jdbc.UpdateBook();
+			} else if (num == 9) {
+				System.out.println("종료됩니다...");
+				break;
+			} else {
+				System.out.println("번호를 잘못 누르셨습니다.");
+			}
+		}
+	}
+
